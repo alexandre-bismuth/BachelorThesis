@@ -20,6 +20,11 @@ from sklearn.metrics import (
     f1_score, accuracy_score, roc_curve, auc, precision_recall_curve, log_loss
 )
 
+## ENVIRONMENT SETUP ##
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.set_float32_matmul_precision('high')
+#######################
+
 def list_files(path):
     """Return a list of .wav file paths under the given directory."""
     objects = []
@@ -34,7 +39,7 @@ def create_dataframe(keys):
     return pd.DataFrame(index=keys, data={"label": [1 if "Gunshot" in key else 0 for key in keys]})
 
 def train_model(model, train_loader, val_loader, output_path, output_path2, num_epochs, lr):
-    torch.set_float32_matmul_precision('high')
+    global device
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=5)
@@ -90,7 +95,13 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
 
 
 def evaluate_model(path, val_loader, threshold=0.5):
-    """Evaluates a trained PyTorch model and saves metrics & plots to a local directory."""
+    """
+    Evaluates the trained Pytorch model and saves metrics to a local directory.
+    Note here that we are evaluating our model on the validation set, which is not
+    ideal since the validation data is used to select the best model, but is necessary
+    given that we have very few positive samples.
+    """
+    global device
     model = torch.load(path,map_location=device,weights_only=False)
     model.eval()
     
