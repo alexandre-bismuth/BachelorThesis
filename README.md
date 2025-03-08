@@ -1,5 +1,6 @@
 # Title of the Bachelor Thesis Project
 Alexandre Bismuth, BSc in Mathematics and Computer Science of Ecole Polytechnique, France
+
 Bachelor Thesis supervised by Professor Alex Rogers, St Anne's College, University of Oxford, United Kingdom
 
 *All of the present code is original unless explicitly stated otherwise*
@@ -27,13 +28,3 @@ The tropical gunshot data can be found [here](https://data.mendeley.com/datasets
 This project relies on various packages pinned to specific versions (almost always the latest) to avoid the versioning issues encountered in the previous pipeline while optimizing performance and ensuring stability. Additionally, some imports require extra shell commands to run without errors. 
 
 To address both issues at once, we provide a lifecycle shell script that should be executed every time an instance is initialized. To run it, simply execute `./lifecycle` directly from your terminal.
-
-## Part 1 : Function Approximation
-
-## Part 2 : Updating the `opensoundscape` pipeline
-
-## Part 3 : Comparing various preprocessing techniques
-
-## Part 4 : Compressing models while retaining performance
-
-## Part 5 : Integrating our model within an Arduino
