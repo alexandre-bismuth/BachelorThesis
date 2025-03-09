@@ -15,10 +15,8 @@ import pandas as pd
 # Evaluation imports
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import (
-    confusion_matrix, classification_report, precision_score, recall_score, 
-    f1_score, accuracy_score, roc_curve, auc, precision_recall_curve, log_loss
-)
+from sklearn.metrics import confusion_matrix, classification_report, precision_score, recall_score, \
+                            f1_score, accuracy_score, roc_curve, auc, precision_recall_curve
 
 ## ENVIRONMENT SETUP ##
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -92,8 +90,6 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
     print(f"\n🎯 Training Complete! Best Model saved with F1 Score: {best_f1:.4f}")
     return model
 
-
-
 def evaluate_model(path, val_loader, threshold=0.5):
     """
     Evaluates the trained Pytorch model and saves metrics to a local directory.
@@ -102,7 +98,7 @@ def evaluate_model(path, val_loader, threshold=0.5):
     given that we have very few positive samples.
     """
     global device
-    model = torch.load(path,map_location=device,weights_only=False)
+    model = torch.load(path, map_location=device, weights_only=False)
     model.eval()
     
     all_labels = []
@@ -130,7 +126,7 @@ def evaluate_model(path, val_loader, threshold=0.5):
     y_pred = np.array(all_preds)
     y_prob = np.array(all_probs)
     
-    # Compute evaluation metrics (additional code for ROC, PR curves omitted)
+    # Compute evaluation metrics
     conf_matrix = confusion_matrix(y_true, y_pred)
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
@@ -157,6 +153,7 @@ F1 Score: {f1:.4f}
         f.write(metrics_text)
     print(metrics_text)
     
+    # Plot and save the confusion matrix
     plt.figure(figsize=(6, 5))
     sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues",
                 xticklabels=["Background", "Gunshot"],
@@ -166,4 +163,34 @@ F1 Score: {f1:.4f}
     plt.title("Confusion Matrix")
     plt.savefig(os.path.join(eval_dir, "confusion_matrix.png"))
     plt.close()
+    
+    # --- ROC Curve ---
+    # We plot it for comparison purposes but will not use it as a metric 
+    # in our report since it is not well-suited for imabalanced datasets 
+    fpr, tpr, _ = roc_curve(y_true, y_prob)
+    roc_auc = auc(fpr, tpr)
+    
+    plt.figure(figsize=(6, 5))
+    plt.plot(fpr, tpr, label=f'ROC curve (area = {roc_auc:.4f})')
+    plt.plot([0, 1], [0, 1], 'k--', label='Chance')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC)')
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(eval_dir, "roc_curve.png"))
+    plt.close()
+    
+    # --- Precision-Recall Curve ---
+    precision_vals, recall_vals, _ = precision_recall_curve(y_true, y_prob)
+    auprc = auc(recall_vals, precision_vals)
+    
+    plt.figure(figsize=(6, 5))
+    plt.plot(recall_vals, precision_vals, label=f'PR curve (area = {auprc:.4f})')
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve')
+    plt.legend(loc='lower left')
+    plt.savefig(os.path.join(eval_dir, "precision_recall_curve.png"))
+    plt.close()
+    
     print(f"✅ Evaluation complete. Results saved in: {eval_dir}")
