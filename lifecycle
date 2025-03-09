@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# This is an OnStart script for SageMaker Studio Lifecycle Configuration.
-# You can view logs in CloudWatch under /aws/sagemaker/StudioLifecycle
-
 set -e  # Exit immediately on error
 
 echo "==== OnStart script: Installing custom packages ===="
