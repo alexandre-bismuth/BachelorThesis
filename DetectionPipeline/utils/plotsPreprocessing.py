@@ -22,13 +22,14 @@ def plot_waveform(waveform, sr, title="Waveform", ax=None):
     ax.set_ylabel("Amplitude")
 
 
-def plot_spectrogram(specgram, title=None, ylabel="freq_bin", ax=None):
+def plot_spectrogram(specgram, title=None, ylabel="Frequency bins", ax=None):
     # Figure out what the x_axis is since the range is [0,125] - time_bin ? 
     if ax is None:
         _, ax = plt.subplots(1, 1)
     if title is not None:
         ax.set_title(title)
     ax.set_ylabel(ylabel)
+    ax.set_xlabel("Time bins")
     ax.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto", interpolation="nearest")
 
 def plot_fbank(fbank, title=None):
