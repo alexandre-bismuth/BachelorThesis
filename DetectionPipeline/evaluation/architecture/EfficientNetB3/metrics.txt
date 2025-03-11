@@ -15,3 +15,9 @@ Accuracy: 0.9944
 Precision: 0.8438
 Recall: 0.9000
 F1 Score: 0.8710
+
+=== Performance Metrics - Optimised Threshold ===
+Threshold: 0.7714
+Precision: 0.8867
+Recall: 0.8867
+F1 Score: 0.8867

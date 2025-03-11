@@ -90,7 +90,7 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
     print(f"\n🎯 Training Complete! Best Model saved with F1 Score: {best_f1:.4f}")
     return model
 
-def evaluate_model(path, val_loader, threshold=0.5):
+def evaluate_model(path, val_loader, threshold=0.5, optimized_f1=False):
     """
     Evaluates the trained Pytorch model and saves metrics to a local directory.
     Note here that we are evaluating our model on the validation set, which is not
@@ -149,10 +149,6 @@ Recall: {recall:.4f}
 F1 Score: {f1:.4f}
 """
     
-    with open(os.path.join(eval_dir, "metrics.txt"), "w") as f:
-        f.write(metrics_text)
-    print(metrics_text)
-    
     # Plot and save the confusion matrix
     plt.figure(figsize=(6, 5))
     sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues",
@@ -181,8 +177,21 @@ F1 Score: {f1:.4f}
     plt.close()
     
     # --- Precision-Recall Curve ---
-    precision_vals, recall_vals, _ = precision_recall_curve(y_true, y_prob)
+    precision_vals, recall_vals, threshold_vals = precision_recall_curve(y_true, y_prob)
     auprc = auc(recall_vals, precision_vals)
+
+    if optimized_f1:
+        f1_vals = 2*precision_vals*recall_vals/(precision_vals+recall_vals)
+        max_f1, max_f1_index = np.max(f1_vals), np.argmax(f1_vals)
+        max_precision, max_recall = precision_vals[max_f1_index], recall_vals[max_f1_index]
+        best_threshold = threshold_vals[max_f1_index]
+        metrics_text += f"""
+=== Performance Metrics - Optimised Threshold ===
+Threshold: {best_threshold:.4f}
+Precision: {max_precision:.4f}
+Recall: {max_recall:.4f}
+F1 Score: {max_f1:.4f}
+"""
     
     plt.figure(figsize=(6, 5))
     plt.plot(recall_vals, precision_vals, label=f"PR curve (area = {auprc:.4f})")
@@ -192,5 +201,10 @@ F1 Score: {f1:.4f}
     plt.legend(loc="lower left")
     plt.savefig(os.path.join(eval_dir, "precision_recall_curve.png"))
     plt.close()
+
+    with open(os.path.join(eval_dir, "metrics.txt"), "w") as f:
+        f.write(metrics_text)
+    print(metrics_text)
+
     
     print(f"✅ Evaluation complete. Results saved in: {eval_dir}")

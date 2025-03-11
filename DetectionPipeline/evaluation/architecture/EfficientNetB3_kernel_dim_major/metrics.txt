@@ -1,0 +1,23 @@
+
+=== Classification Report ===
+              precision    recall  f1-score   support
+
+  Background       1.00      1.00      1.00      7040
+     Gunshot       0.81      0.89      0.85       150
+
+    accuracy                           0.99      7190
+   macro avg       0.90      0.94      0.92      7190
+weighted avg       0.99      0.99      0.99      7190
+
+
+=== Performance Metrics ===
+Accuracy: 0.9935
+Precision: 0.8121
+Recall: 0.8933
+F1 Score: 0.8508
+
+=== Performance Metrics - Optimised Threshold ===
+Threshold: 0.8552
+Precision: 0.8571
+Recall: 0.8800
+F1 Score: 0.8684
