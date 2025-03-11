@@ -9,7 +9,6 @@ from matplotlib import cm
 
 def plot_waveform(waveform, sr, title="Waveform", ax=None):
     waveform = waveform.numpy()
-
     num_channels, num_frames = waveform.shape
     time_axis = torch.arange(0, num_frames) / sr
 
