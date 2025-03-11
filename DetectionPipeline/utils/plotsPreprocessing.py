@@ -1,4 +1,5 @@
-from torch import arange
+import torch
+import torch.nn as nn
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ def plot_waveform(waveform, sr, title="Waveform", ax=None):
     waveform = waveform.numpy()
 
     num_channels, num_frames = waveform.shape
-    time_axis = arange(0, num_frames) / sr
+    time_axis = torch.arange(0, num_frames) / sr
 
     if ax is None:
         _, ax = plt.subplots(num_channels, 1)
@@ -20,7 +21,6 @@ def plot_waveform(waveform, sr, title="Waveform", ax=None):
     ax.set_title(title)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Amplitude")
-
 
 def plot_spectrogram(specgram, title=None, ylabel="Frequency bins", ax=None):
     # Figure out what the x_axis is since the range is [0,125] - time_bin ? 
@@ -73,6 +73,30 @@ def plot_complex_spectrogram_3d(specgram, title=None):
     ax.set_xlabel("time_bin")
     ax.set_ylabel("freq_bin")
     ax.set_zlabel("Imaginary Part")
+
+
+def conv_display(mel_spec_pos, mel_spec_neg, x, y):
+    mel_spec_pos = mel_spec_pos.unsqueeze(0)
+    mel_spec_neg = mel_spec_neg.unsqueeze(0)
+    conv_layer = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=(x,y), stride=1, padding=0, bias=False)
+    nn.init.constant_(conv_layer.weight, 1.0/(x*y))
+    
+    with torch.no_grad():
+        conv_result_pos = conv_layer(mel_spec_pos)
+        conv_result_neg = conv_layer(mel_spec_neg)
+    conv_result_pos = conv_result_pos.squeeze().cpu().numpy()
+    conv_result_neg = conv_result_neg.squeeze().cpu().numpy()
+    
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+    axes[0].set_ylabel("Frequency bins")
+    axes[0].set_xlabel("Time bins")
+    axes[0].set_title(f"Convolved Gunshot with kernel size ({x}, {y})")
+    axes[0].imshow(conv_result_pos, aspect="auto")
+    
+    axes[1].set_ylabel("Frequency bins")
+    axes[1].set_xlabel("Time bins")
+    axes[1].set_title(f"Convolved Background with kernel size ({x}, {y})")
+    axes[1].imshow(conv_result_neg, aspect="auto")
 
 
     
