@@ -1,4 +1,4 @@
-# Optimising Gunshot Detection in Tropical Forests for Wildlife Protection
+# Optimising Gunshot Detection in Tropical Forests for Wildlife Protection with TinyML
 Alexandre Bismuth, BSc in Mathematics and Computer Science of Ecole Polytechnique, France
 
 Bachelor Thesis supervised by Professor Alex Rogers, St Anne's College, University of Oxford, United Kingdom
