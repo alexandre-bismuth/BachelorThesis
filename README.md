@@ -21,7 +21,7 @@ The specifications of these instances can be summarized in the following table:
 
 ### Data
 
-The tropical gunshot data can be found [here](https://data.mendeley.com/datasets/x48cwz364j/3). To make it compatible with our notebooks without any path editing, you should unzip the file, rename the directory as "Data", and place it within the `Gunshot/` folder.
+The tropical gunshot data can be found [here](https://data.mendeley.com/datasets/x48cwz364j/3). To make it compatible with our notebooks without any path editing, you should unzip the file, rename the directory as "Data", and place it within the root of the directry.
 
 ### Dependencies
 

@@ -40,8 +40,8 @@ class BaseWaveformDataset(Dataset):
 
     def augment_wf(self, waveform, p):
         # Random time shift - prevent detecting gunshots only in the middle of the audio
-        if np.random.random() < p: # TODO : Study the impact of differnt values of p
-            shift_amt = np.random.randint(0, waveform.shape[-1] - 1)
+        if np.random.random() < p:
+            shift_amt = np.random.randint(-1, 1)
             waveform = torch.roll(waveform, shifts=shift_amt, dims=-1)
 
         # Gaussian noise - small value since there is already a lot of background noise
@@ -49,9 +49,6 @@ class BaseWaveformDataset(Dataset):
             noise_scale = np.random.normal(0, 0.3)
             noise = torch.randn_like(waveform) * noise_scale
             waveform = waveform + noise
-
-        # No need for time stretch, gunshots are sudden
-        # No need for pitch shift, gunshots are characteristic + recordings use different rifles
         return waveform
 
 
