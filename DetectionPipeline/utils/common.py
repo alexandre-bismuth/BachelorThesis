@@ -1,5 +1,6 @@
 # System imports
 import os
+import datetime
 from tqdm import tqdm
 import time
 
@@ -49,7 +50,11 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
         # Training part
         model.train()
         train_loss = 0.0   
-        for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Training]"):
+        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Training]"):
+            if len(batch) == 3:
+                images, labels, _ = batch
+            else:
+                images, labels = batch
             images, labels = images.to(device), labels.to(device).to(torch.int64).squeeze(1)
             optimizer.zero_grad()
             outputs = model(images)
@@ -65,7 +70,11 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
         all_preds = []
         val_loss = 0.0
         with torch.no_grad():
-            for images, labels in tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Validation]"):
+            for batch in tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Validation]"):
+                if len(batch) == 3:
+                    images, labels, _ = batch
+                else:
+                    images, labels = batch
                 images, labels = images.to(device), labels.to(device).to(torch.int64).squeeze(1)
                 outputs = model(images)
                 loss = criterion(outputs, labels)
@@ -90,7 +99,7 @@ def train_model(model, train_loader, val_loader, output_path, output_path2, num_
     print(f"\n🎯 Training Complete! Best Model saved with F1 Score: {best_f1:.4f}")
     return model
 
-def evaluate_model(path, val_loader, threshold=0.5, optimized_f1=False):
+def evaluate_model(path, val_loader, threshold=0.5, optimized_f1=False, delta_fp_fn=False):
     """
     Evaluates the trained Pytorch model and saves metrics to a local directory.
     Note here that we are evaluating our model on the validation set, which is not
@@ -105,8 +114,15 @@ def evaluate_model(path, val_loader, threshold=0.5, optimized_f1=False):
     all_preds = []
     all_probs = []
     
+    if delta_fp_fn:
+        all_file_paths = []
+    
     with torch.no_grad():
-        for images, labels in tqdm(val_loader, desc="Evaluating"):
+        for batch in tqdm(val_loader, desc="Evaluating"):
+            if len(batch) == 3:
+                images, labels, file_paths = batch
+            else:
+                images, labels = batch
             images = images.to(device)
             labels = labels.to(device).to(torch.int64).squeeze(1)
             
@@ -120,6 +136,10 @@ def evaluate_model(path, val_loader, threshold=0.5, optimized_f1=False):
             all_preds.extend(preds.cpu().numpy().tolist())
             all_labels.extend(labels.cpu().numpy().tolist())
             all_probs.extend(probabilities[:, 1].cpu().numpy().tolist())
+
+            if delta_fp_fn:
+                assert len(batch) == 3, "The dataset your loader uses is not suited for delta analysis"
+                all_file_paths.extend(file_paths)
     
     # Convert lists to numpy arrays
     y_true = np.array(all_labels)
@@ -191,6 +211,51 @@ Threshold: {best_threshold:.4f}
 Precision: {max_precision:.4f}
 Recall: {max_recall:.4f}
 F1 Score: {max_f1:.4f}
+"""
+    if delta_fp_fn:
+        false_positive_indices = np.where((y_true == 0) & (y_pred == 1))[0]
+        false_positive_file_paths = [all_file_paths[i] for i in false_positive_indices]
+        
+        # Sort the file paths in chronological order based on the first 8 characters (hex timestamp)
+        false_positive_file_paths = sorted(false_positive_file_paths, key=lambda fp: int(os.path.basename(fp)[:8], 16))
+        timestamps_fp = [int(os.path.basename(fp)[:8], 16) for fp in false_positive_file_paths]
+
+        assert len(timestamps_fp) >= 2, "There are not enough false positives to provide the mean time between false positives, please set the mean_time_fp parameter to False"
+        
+        time_diffs_fp = np.diff(timestamps_fp)
+        mean_time_fp = np.mean(time_diffs_fp)
+        median_time_fp = np.median(time_diffs_fp)
+        max_time_fp, min_time_fp = np.max(time_diffs_fp), np.min(time_diffs_fp)
+
+        metrics_text += f"""
+=== False Positive analysis ===
+Number of False Positives : {len(false_positive_file_paths)}
+Mean Time Between False Positives: {mean_time_fp:.0f} seconds ({str(datetime.timedelta(seconds=int(mean_time_fp)))})
+Median Time Between False Positives: {median_time_fp:.0f} seconds ({str(datetime.timedelta(seconds=int(median_time_fp)))})
+Maximum Time Between False Positives: {max_time_fp:.0f} seconds ({str(datetime.timedelta(seconds=int(max_time_fp)))})
+Minimum Time Between False Positives: {min_time_fp:.0f} seconds ({str(datetime.timedelta(seconds=int(min_time_fp)))})
+"""
+        false_negative_indices = np.where((y_true == 1) & (y_pred == 0))[0]
+        false_negative_file_paths = [all_file_paths[i] for i in false_negative_indices]
+        
+        # Sort the file paths in chronological order based on the first 8 characters (hex timestamp)
+        false_negative_file_paths = sorted(false_negative_file_paths, key=lambda fn: int(os.path.basename(fn)[:8], 16))
+        timestamps_fn = [int(os.path.basename(fn)[:8], 16) for fn in false_negative_file_paths]
+        
+        assert len(timestamps_fn) >= 2, "There are not enough false negatives to provide the mean time between false negatives, please set the mean_time_fn parameter to False"
+        
+        time_diffs_fn = np.diff(timestamps_fn)
+        mean_time_fn = np.mean(time_diffs_fn)
+        median_time_fn = np.median(time_diffs_fn)
+        max_time_fn, min_time_fn = np.max(time_diffs_fn), np.min(time_diffs_fn)
+
+        metrics_text += f"""
+=== False Negative analysis ===
+Number of False Negatives : {len(false_negative_file_paths)}
+Mean Time Between False Negatives: {mean_time_fn:.0f} seconds ({str(datetime.timedelta(seconds=int(mean_time_fn)))})
+Median Time Between False Negatives: {median_time_fn:.0f} seconds ({str(datetime.timedelta(seconds=int(median_time_fn)))})
+Maximum Time Between False Negatives: {max_time_fn:.0f} seconds ({str(datetime.timedelta(seconds=int(max_time_fn)))})
+Minimum Time Between False Negatives: {min_time_fn:.0f} seconds ({str(datetime.timedelta(seconds=int(min_time_fn)))})
 """
     
     plt.figure(figsize=(6, 5))
