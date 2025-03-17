@@ -9,7 +9,6 @@ PACKAGE_LIST=(
   "torchvision==0.21.0"
   "torchaudio==2.6.0"
   "transformers==4.49.0"
-  "tensorflow==2.19.0"
   "tflite==2.18.0"
   "opensoundscape==0.12.0"
   "numpy==1.26.4" # Pipeline uncompatibile with Numpy >= 2.0.0
@@ -19,6 +18,8 @@ PACKAGE_LIST=(
   "scikit-learn==1.6.1"
   "dask[dataframe]==2025.2.0"
   "librosa==0.11.0"
+  "tensorflow[and-cuda]==2.17.1" # Exact Tensorflow required for Torch 2.6.0 compatibility because of joint dependencies
+  "tensorflow-model-optimization==0.8.0"
 )
 
 echo "Installing packages..."
@@ -28,6 +29,8 @@ for PKG in "${PACKAGE_LIST[@]}"; do
     echo "Installed $PKG"
 done
 
+# Install Linux Libraries
 sudo apt-get install -y libgl1-mesa-dev
+sudo apt install xxd
 
 echo "==== Package installation complete ===="
